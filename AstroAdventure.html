@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CosmoChallenge AR</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.rawgit.com/AR-js-org/AR.js/3.3.2/aframe/build/aframe-ar.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    #infoPanel {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 90%;
+      text-align: center;
+    }
+    .option {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .option:hover { background: #1976D2; }
+  </style>
+</head>
+<body>
+  <a-scene embedded arjs>
+    <!-- الكواكب -->
+    <a-marker preset="hiro" id="marsMarker">
+      <a-entity gltf-model="assets/models/mars.glb" scale="0.5 0.5 0.5" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-marker preset="kanji" id="jupiterMarker">
+      <a-entity gltf-model="assets/models/jupiter.glb" scale="0.7 0.7 0.7" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-marker preset="pattern" url="assets/markers/venus.patt" id="venusMarker">
+      <a-entity gltf-model="assets/models/venus.glb" scale="0.5 0.5 0.5" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-marker preset="pattern" url="assets/markers/earth.patt" id="earthMarker">
+      <a-entity gltf-model="assets/models/earth.glb" scale="0.5 0.5 0.5" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-marker preset="pattern" url="assets/markers/saturn.patt" id="saturnMarker">
+      <a-entity gltf-model="assets/models/saturn.glb" scale="0.6 0.6 0.6" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-marker preset="pattern" url="assets/markers/uranus.patt" id="uranusMarker">
+      <a-entity gltf-model="assets/models/uranus.glb" scale="0.55 0.55 0.55" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-marker preset="pattern" url="assets/markers/neptune.patt" id="neptuneMarker">
+      <a-entity gltf-model="assets/models/neptune.glb" scale="0.55 0.55 0.55" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <!-- الصاروخ -->
+    <a-marker preset="pattern" url="assets/markers/sultanRocket.patt" id="sultanRocketMarker">
+      <a-entity gltf-model="assets/models/sultanRocket.glb" scale="0.5 0.5 0.5" position="0 0 0"></a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <div id="infoPanel">
+    <div id="planetInfo">وجهي الكاميرا على رمز لرؤية المجسم!</div>
+    <div id="questionPanel" style="display:none;">
+      <p id="questionText"></p>
+      <button class="option" id="opt1"></button>
+      <button class="option" id="opt2"></button>
+      <button class="option" id="opt3"></button>
+      <p id="feedbackText"></p>
+      <p>نقاطك: <span id="score">0</span></p>
+    </div>
+  </div>
+
+  <script>
+    let score = 0;
+
+    const items = {
+      marsMarker: {
+        facts: "المريخ هو الكوكب الأحمر، له أطول جبل في المجموعة الشمسية ويملك قمران.",
+        question: "كم عدد أقمار المريخ؟",
+        options: ["1","2","4"],
+        correct: 2
+      },
+      jupiterMarker: {
+        facts: "المشتري أكبر كوكب في النظام الشمسي ويملك أكبر عاصفة مستمرة منذ 400 سنة.",
+        question: "كم عدد أقمار المشتري؟",
+        options: ["79","14","62"],
+        correct: 1
+      },
+      venusMarker: {
+        facts: "الزهرة حار جدًا ويُعرف أنه يدور بالعكس مقارنة بالأرض.",
+        question: "أي كوكب يدور بالعكس؟",
+        options: ["الزهرة","المريخ","المشتري"],
+        correct: 1
+      },
+      earthMarker: {
+        facts: "الأرض الكوكب الوحيد المعروف بالحياة 🌱، 70% من سطحه مغطى بالماء.",
+        question: "كم عدد أقمار الأرض؟",
+        options: ["1","2","0"],
+        correct: 1
+      },
+      saturnMarker: {
+        facts: "زحل مشهور بحلقاته الجميلة وكثافته منخفضة لدرجة يمكنه الطفو على الماء!",
+        question: "أي كوكب له حلقات واضحة؟",
+        options: ["زحل","أورانوس","نبتون"],
+        correct: 1
+      },
+      uranusMarker: {
+        facts: "أورانوس يدور على جانبه وكأنه يتدحرج، ولونه أزرق.",
+        question: "أي كوكب يدور على جانبه؟",
+        options: ["أورانوس","نبتون","المشتري"],
+        correct: 1
+      },
+      neptuneMarker: {
+        facts: "نبتون بعيد جدًا عن الشمس ويتميز بأسرع رياح تصل 2000 كم/س.",
+        question: "أي كوكب فيه أسرع رياح؟",
+        options: ["نبتون","المريخ","الزهرة"],
+        correct: 1
+      },
+      sultanRocketMarker: {
+        facts: "صاروخ الأمير سلطان بن سلمان كان من نوع 'Saturn V' وأُطلق في أول رحلة فضاء سعودية عام 1985.",
+        question: "ما نوع صاروخ الأمير سلطان بن سلمان؟",
+        options: ["Saturn V", "Falcon 9", "Soyuz"],
+        correct: 1
+      }
+    };
+
+    Object.keys(items).forEach(markerId => {
+      const marker = document.getElementById(markerId);
+      marker.addEventListener("markerFound", () => {
+        const data = items[markerId];
+        document.getElementById("planetInfo").textContent = data.facts;
+        document.getElementById("questionPanel").style.display = "block";
+        document.getElementById("questionText").textContent = data.question;
+        document.getElementById("opt1").textContent = data.options[0];
+        document.getElementById("opt2").textContent = data.options[1];
+        document.getElementById("opt3").textContent = data.options[2];
+        document.getElementById("feedbackText").textContent = "";
+
+        document.getElementById("opt1").onclick = () => checkAnswer(1, data.correct);
+        document.getElementById("opt2").onclick = () => checkAnswer(2, data.correct);
+        document.getElementById("opt3").onclick = () => checkAnswer(3, data.correct);
+      });
+
+      marker.addEventListener("markerLost", () => {
+        document.getElementById("planetInfo").textContent = "وجهي الكاميرا على رمز لرؤية المجسم!";
+        document.getElementById("questionPanel").style.display = "none";
+      });
+    });
+
+    function checkAnswer(selected, correct) {
+      if(selected === correct) {
+        document.getElementById("feedbackText").textContent = "صح! 🎉";
+        score += 10;
+      } else {
+        document.getElementById("feedbackText").textContent = "خطأ! الإجابة الصحيحة هي: " + 
+          Object.values(items).find(p => p.correct === correct).options[correct-1];
+      }
+      document.getElementById("score").textContent = score;
+    }
+  </script>
+</body>
+</html>
